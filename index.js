@@ -2,13 +2,13 @@ let SEARCH_QUERY = []; //nhập tên của subject mail cần tải vd "CV_K17"
 
 let AVOID_REPEATED_ADDRESS = true;
 
-// Main function
+//lấy từ mail về sheets (ngày giờ gửi, mail, chủ đề, link drive)
 function getMail() {
     SpreadsheetApp.getActiveSheet().clear();  
     let start = 0;
     let max = 500;  
     let threads = GmailApp.search(SEARCH_QUERY, start, max);
-    appendData(1, [["Date Send Mail","Email", "Subject", "Link Drive", "Reply", "Date Reply"]]);   
+    appendData(1, [["Date Send Mail","Email", "Subject", "Link Drive", "Reply", "Date Reply"]]);   //add vào dòng đầu của sheet
     let totalEmails = 0;
     let emails = [];
     let addresses = [];
@@ -22,11 +22,10 @@ function getMail() {
             let data = msg.getDate();          
             let from = msg.getFrom();
             let sub = msg.getSubject()
-            let to = msg.getTo()
             let regex = /(https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|www\.[a-zA-Z0-9][a-zA-Z0-9-]+[a-zA-Z0-9]\.[^\s]{2,}|https?:\/\/(?:www\.|(?!www))[a-zA-Z0-9]+\.[^\s]{2,}|www\.[a-zA-Z0-9]+\.[^\s]{2,})"/g
-            let body = msg.getBody().match(regex)
+            let body = msg.getBody().match(regex) //lấy link drive
             let dataLine = [data,from,sub,body];
-            if (!AVOID_REPEATED_ADDRESS || (AVOID_REPEATED_ADDRESS && !addresses.includes(from))){
+            if (!AVOID_REPEATED_ADDRESS || (AVOID_REPEATED_ADDRESS && !addresses.includes(from))){ //kiểm tra mail nào gửi cuối thì thêm vào sheet
               emails.push(dataLine);
               addresses.push(from);
             }
@@ -43,12 +42,14 @@ function getMail() {
     }
 }
 
+//gửi mail reply khi nhập id 
 function sendMailById(){
   let sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   let ui = SpreadsheetApp.getUi();
   let response = ui.prompt('Enter your id to send mail:'); //"CVK17_SE171717"
   let id = response.getResponseText();
   let values = sheet.getRange(2, 3, sheet.getLastRow(),sheet.getLastColumn()).getValues();
+  //lấy data từ sheet
   for (let i=0; i<values.length; i++){
     if(values[i][0] == id ){
       i+=2;
@@ -58,12 +59,12 @@ function sendMailById(){
       sheet.getRange(i, 6).setValue(date); 
     }
   }
-  if(response.getSelectedButton() == ui.Button.OK){
+  if(response.getSelectedButton() == ui.Button.OK){//gửi mail
     MailApp.sendEmail(mail, "Rep lại nè", reply); //html mail in here, cái này test
   }
 }
 
-
+//gửi toàn bộ mail reply
 function sendAll(){
   let sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   let values = sheet.getRange(2, 3, sheet.getLastRow(),sheet.getLastColumn()).getValues();
@@ -71,7 +72,7 @@ function sendAll(){
       let mail=sheet.getRange(i, 2).getValue();
       let reply=sheet.getRange(i, 5).getValue();  
       let date = new Date().toLocaleTimeString();
-      sheet.getRange(i, 6).setValue(date); 
+      sheet.getRange(i, 6).setValue(date);  //ngày giờ reply
   }
   MailApp.sendEmail(mail, "Rep lại nè", reply); //html mail in here, cái này test
 }
